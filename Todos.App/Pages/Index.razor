@@ -1,0 +1,64 @@
+﻿@page "/"
+@using Todos.App.Models;.
+@using Todos.App.Extensions;
+
+<PageTitle>Todos</PageTitle>
+
+<h3>Todos</h3>
+
+@if (todos is not null)
+{
+    <div class="input-group w-50 mb-3">
+        <input type="text" class="form-control" placeholder="Enter a to-do" @bind="@description" />
+        <button class="btn btn-outline-success" @onclick="AddTodo">Add</button>
+    </div>
+
+    <ul class="list-group w-50 mb-3">
+        @foreach (var todo in todos)
+        {
+            <li class="list-group-item d-flex align-items-center justify-content-between">
+                <div>
+                    <input id="@todo.Id" type="checkbox" class="form-check-input" checked="@todo.Completed" @onchange="@(e => Update(e.Value.ToBool(), todo))" />
+                    <label class="form-check-label @(todo.Completed ? "completed" : "")" for="@todo.Id">@todo.Description</label>
+                </div>
+                <input type="button" value="Delete" class="btn btn-outline-danger btn-sm" @onclick="() => DeleteTodo(todo)" />
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    string description = string.Empty;
+    List<Todo> todos = new()
+    {
+
+    };
+
+    private void Update(bool completed, Todo todo)
+    {
+        todo.Completed = completed;
+    }
+
+    private void DeleteTodo(Todo todo)
+    {
+        todos.Remove(todo);
+    }
+
+    private void AddTodo()
+    {
+        var foundTodo = todos.FirstOrDefault(x => x.Description == description);
+        if (!string.IsNullOrWhiteSpace(description) && foundTodo == null)
+        {
+            int newId = todos.Count().Equals(0) ? 1 : todos.Max(x => x.Id) + 1;
+            Todo newTodo = new()
+                {
+                    Id = newId,
+                    Description = description
+                };
+            todos.Add(newTodo);
+            description = string.Empty;
+        }
+    }
+}
+
+
