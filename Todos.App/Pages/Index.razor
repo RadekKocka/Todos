@@ -6,15 +6,23 @@
 
 <h3>Todos</h3>
 
-@if (todos is not null)
+@if (todoFactory.GetTodos() is not null)
 {
     <div class="input-group w-50 mb-3">
         <input type="text" class="form-control" placeholder="Enter a to-do" @bind="@description" />
         <button class="btn btn-outline-success" @onclick="AddTodo">Add</button>
     </div>
 
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible w-50">
+            <strong>Error! </strong>@errorMessage
+            <button type="button" class="btn btn-close" @onclick="HideError"></button>
+        </div>
+    }
+
     <ul class="list-group w-50 mb-3">
-        @foreach (var todo in todos)
+        @foreach (var todo in todoFactory.GetTodos())
         {
             <li class="list-group-item d-flex align-items-center justify-content-between">
                 <div>
@@ -29,36 +37,49 @@
 
 @code {
     string description = string.Empty;
-    List<Todo> todos = new()
-    {
+    string errorMessage = string.Empty;
 
-    };
+    TodoFactory todoFactory = new();
 
-    private void Update(bool completed, Todo todo)
-    {
-        todo.Completed = completed;
-    }
+    void HideError() => errorMessage = string.Empty;
 
-    private void DeleteTodo(Todo todo)
+    void Update(bool completed, Todo todo)
     {
-        todos.Remove(todo);
-    }
-
-    private void AddTodo()
-    {
-        var foundTodo = todos.FirstOrDefault(x => x.Description == description);
-        if (!string.IsNullOrWhiteSpace(description) && foundTodo == null)
+        HideError();
+        if (!todoFactory.Update(completed, todo))
         {
-            int newId = todos.Count().Equals(0) ? 1 : todos.Max(x => x.Id) + 1;
-            Todo newTodo = new()
-                {
-                    Id = newId,
-                    Description = description
-                };
-            todos.Add(newTodo);
-            description = string.Empty;
+            errorMessage = "Unable to update Todo";
         }
     }
+
+    void DeleteTodo(Todo todo)
+    {
+        HideError();
+        todoFactory.DeleteTodo(todo);
+    }
+
+    void AddTodo()
+    {
+        HideError();
+        try
+        {
+            todoFactory.AddTodo(description);
+            description = string.Empty;
+        }
+        catch (ArgumentNullException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch
+        {
+            errorMessage = "Something went wrong";
+        }
+    }
+
 }
 
 
